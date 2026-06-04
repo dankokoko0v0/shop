@@ -382,43 +382,50 @@
         }
 
         // 提交订单
-        async function submitOrder() {
-            const name = document.getElementById("name").value;
-            const phone = document.getElementById("phone").value;
-            const address = document.getElementById("address").value;
+        // 提交订单
+async function submitOrder() {
+    const name = document.getElementById("name").value;
+    const phone = document.getElementById("phone").value;
+    const address = document.getElementById("address").value;
 
-            if (!name || !phone || !address) {
-                alert("请填写完整信息！");
-                return;
-            }
+    if (!name || !phone || !address) {
+        alert("请填写完整信息！");
+        return;
+    }
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/orders`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        customer_name: name,
-                        customer_phone: phone,
-                        customer_address: address,
-                        items: cart
-                    })
-                });
+    try {
+        const response = await fetch(`${API_BASE_URL}/orders`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                customer_name: name,
+                customer_phone: phone,
+                customer_address: address,
+                items: cart
+            })
+        });
 
-                const result = await response.json();
-                
-                if (result.success) {
-                    document.getElementById("order-form").style.display = "none";
-                    document.getElementById("success-message").style.display = "block";
-                    cart = [];
-                    updateCartUI();
-                }
-            } catch (error) {
-                console.error("提交订单失败:", error);
-                alert("提交订单失败，请稍后再试");
+        const result = await response.json();
+        
+        if (result.success) {
+            // 创建支付
+            const payResponse = await fetch(`${API_BASE_URL}/pay/create?order_no=${result.order_no}`);
+            const payResult = await payResponse.json();
+            
+            if (payResult.success) {
+                // 跳转到支付页面
+                window.location.href = payResult.pay_url;
+            } else {
+                alert("支付创建失败，请稍后再试");
             }
         }
+    } catch (error) {
+        console.error("提交订单失败:", error);
+        alert("提交订单失败，请稍后再试");
+    }
+}
 
         // 点击弹窗外部关闭
         window.onclick = function(event) {
