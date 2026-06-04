@@ -21,9 +21,9 @@ ADMIN_PASSWORD = "your_secure_password_123"
 XUNHU_PAY_MCHID = "你的商户ID"
 XUNHU_PAY_KEY = "你的商户密钥"
 # 支付成功后跳转的页面
-PAY_RETURN_URL = "https://your-shop.netlify.app/pay_success.html"
+PAY_RETURN_URL = "https://dankokoko.netlify.app/pay_success.html"
 # 支付回调通知地址（Render后端地址+/api/pay/notify）
-PAY_NOTIFY_URL = "https://your-backend.onrender.com/api/pay/notify"
+PAY_NOTIFY_URL = "https://dankokoko-shop2.onrender.com/api/pay/notify"
 
 # --------------------------
 # 数据库配置
