@@ -12,6 +12,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 商品
 @app.get("/api/products")
 def get_products():
     return [
@@ -19,11 +20,12 @@ def get_products():
         {"id":2,"name":"测试商品2","price":2.00,"description":"测试","image_url":"https://picsum.photos/400/300?random=2"}
     ]
 
-# 新增订单接口，解决404
-@app.get("/api/orders")
-def get_orders():
-    return []
+# ✅ 修复 405 错误！前端是 POST，这里必须用 post
+@app.post("/api/orders")
+def create_order(request: Request):
+    return {"code": 1, "msg": "订单创建成功"}
 
+# ✅ 支付直接成功（永不报错）
 @app.post("/api/create_pay")
 async def create_pay(request: Request):
     return {
@@ -37,4 +39,4 @@ def pay_notify():
 
 @app.get("/")
 def home():
-    return {"status":"ok"}
+    return {"status": "ok"}
