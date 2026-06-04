@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网店后台管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: white;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom-color: #2c3e50;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .status-0 { color: #e74c3c; } /* 待支付 */
+        .status-1 { color: #f39c12; } /* 已支付 */
+        .status-2 { color: #3498db; } /* 已发货 */
+        .status-3 { color: #2ecc71; } /* 已完成 */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>网店后台管理</h1>
+            <button class="btn btn-danger" onclick="logout()">退出登录</button>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('products')">商品管理</div>
+            <div class="tab" onclick="switchTab('orders')">订单管理</div>
+        </div>
+
+        <div class="content">
+            <!-- 商品管理 -->
+            <div id="products-tab" class="tab-content active">
+                <button class="btn btn-primary" onclick="openAddProductModal()">添加商品</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>商品名称</th>
+                            <th>价格</th>
+                            <th>库存</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table">
+                        <!-- 商品数据动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 订单管理 -->
+            <div id="orders-tab" class="tab-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>订单号</th>
+                            <th>客户姓名</th>
+                            <th>电话</th>
+                            <th>地址</th>
+                            <th>总价</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table">
+                        <!-- 订单数据动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑商品弹窗 -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeProductModal()">&times;</span>
+            <h2 id="product-modal-title">添加商品</h2>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                <div class="form-group">
+                    <label for="product-name">商品名称</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-price">价格</label>
+                    <input type="number" step="0.01" id="product-price" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-stock">库存</label>
+                    <input type="number" id="product-stock" value="999" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-description">商品描述</label>
+                    <textarea id="product-description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="product-image">图片链接</label>
+                    <input type="url" id="product-image" required>
+                </div>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 后端API地址（和index.html保持一致）
+        const API_BASE_URL = "http://localhost:8000/api";
+        
+        // 管理员认证
+        let authHeader = "";
+
+        // 页面加载时检查登录
+        window.onload = function() {
+            checkLogin();
+        };
+
+        // 检查登录状态
+        function checkLogin() {
+            const savedAuth = localStorage.getItem("adminAuth");
+            if (savedAuth) {
+                authHeader = savedAuth;
+                loadProducts();
+                loadOrders();
+            } else {
+                promptLogin();
+            }
+        }
+
+        // 弹出登录框
+        function promptLogin() {
+            const username = prompt("请输入管理员账号：");
+            const password = prompt("请输入管理员密码：");
+            
+            if (username && password) {
+                authHeader = "Basic " + btoa(username + ":" + password);
+                localStorage.setItem("adminAuth", authHeader);
+                // 验证登录
+                fetch(`${API_BASE_URL}/admin/products`, {
+                    headers: { "Authorization": authHeader }
+                }).then(response => {
+                    if (response.ok) {
+                        loadProducts();
+                        loadOrders();
+                    } else {
+                        alert("用户名或密码错误");
+                        localStorage.removeItem("adminAuth");
+                        promptLogin();
+                    }
+                });
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem("adminAuth");
+            location.reload();
+        }
+
+        // 切换标签
+        function switchTab(tabName) {
+            document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(content => content.classList.remove("active"));
+            
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add("active");
+            document.getElementById(`${tabName}-tab`).classList.add("active");
+        }
+
+        // 加载商品列表
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/products`, {
+                    headers: { "Authorization": authHeader }
+                });
+                const products = await response.json();
+                
+                const tableBody = document.getElementById("products-table");
+                tableBody.innerHTML = "";
+                
+                products.forEach(product => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${product.id}</td>
+                        <td>${product.name}</td>
+                        <td>¥${product.price.toFixed(2)}</td>
+                        <td>${product.stock}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick='editProduct(${JSON.stringify(product)})'>编辑</button>
+                            <button class="btn btn-danger" onclick="deleteProduct(${product.id})">删除</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("加载商品失败:", error);
+            }
+        }
+
+        // 打开添加商品弹窗
+        function openAddProductModal() {
+            document.getElementById("product-modal-title").textContent = "添加商品";
+            document.getElementById("product-form").reset();
+            document.getElementById("product-id").value = "";
+            document.getElementById("product-modal").style.display = "block";
+        }
+
+        // 编辑商品
+        function editProduct(product) {
+            document.getElementById("product-modal-title").textContent = "编辑商品";
+            document.getElementById("product-id").value = product.id;
+            document.getElementById("product-name").value = product.name;
+            document.getElementById("product-price").value = product.price;
+            document.getElementById("product-stock").value = product.stock;
+            document.getElementById("product-description").value = product.description;
+            document.getElementById("product-image").value = product.image_url;
+            document.getElementById("product-modal").style.display = "block";
+        }
+
+        // 关闭商品弹窗
+        function closeProductModal() {
+            document.getElementById("product-modal").style.display = "none";
+        }
+
+        // 提交商品表单
+        document.getElementById("product-form").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            
+            const productId = document.getElementById("product-id").value;
+            const productData = {
+                name: document.getElementById("product-name").value,
+                price: parseFloat(document.getElementById("product-price").value),
+                stock: parseInt(document.getElementById("product-stock").value),
+                description: document.getElementById("product-description").value,
+                image_url: document.getElementById("product-image").value
+            };
+
+            try {
+                let response;
+                if (productId) {
+                    // 更新商品
+                    response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": authHeader
+                        },
+                        body: JSON.stringify(productData)
+                    });
+                } else {
+                    // 添加商品
+                    response = await fetch(`${API_BASE_URL}/admin/products`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": authHeader
+                        },
+                        body: JSON.stringify(productData)
+                    });
+                }
+
+                if (response.ok) {
+                    closeProductModal();
+                    loadProducts();
+                    alert("保存成功");
+                } else {
+                    alert("保存失败");
+                }
+            } catch (error) {
+                console.error("保存商品失败:", error);
+                alert("保存失败");
+            }
+        });
+
+        // 删除商品
+        async function deleteProduct(productId) {
+            if (confirm("确定要删除这个商品吗？")) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+                        method: "DELETE",
+                        headers: { "Authorization": authHeader }
+                    });
+
+                    if (response.ok) {
+                        loadProducts();
+                        alert("删除成功");
+                    } else {
+                        alert("删除失败");
+                    }
+                } catch (error) {
+                    console.error("删除商品失败:", error);
+                    alert("删除失败");
+                }
+            }
+        }
+
+        // 加载订单列表
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+                    headers: { "Authorization": authHeader }
+                });
+                const orders = await response.json();
+                
+                const tableBody = document.getElementById("orders-table");
+                tableBody.innerHTML = "";
+                
+                const statusText = ["待支付", "已支付", "已发货", "已完成"];
+                
+                orders.forEach(order => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${order.order_no}</td>
+                        <td>${order.customer_name}</td>
+                        <td>${order.customer_phone}</td>
+                        <td>${order.customer_address}</td>
+                        <td>¥${order.total_price.toFixed(2)}</td>
+                        <td class="status-${order.status}">${statusText[order.status]}</td>
+                        <td>${new Date(order.created_at).toLocaleString()}</td>
+                        <td>
+                            ${order.status === 1 ? `<button class="btn btn-primary" onclick="shipOrder(${order.id})">标记发货</button>` : ""}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("加载订单失败:", error);
+            }
+        }
+
+        // 标记发货
+        async function shipOrder(orderId) {
+            if (confirm("确定要标记这个订单为已发货吗？")) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": authHeader
+                        },
+                        body: JSON.stringify({ status: 2 })
+                    });
+
+                    if (response.ok) {
+                        loadOrders();
+                        alert("标记发货成功");
+                    } else {
+                        alert("操作失败");
+                    }
+                } catch (error) {
+                    console.error("标记发货失败:", error);
+                    alert("操作失败");
+                }
+            }
+        }
+
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById("product-modal");
+            if (event.target === modal) {
+                closeProductModal();
+            }
+        };
+    </script>
+</body>
+</html>
