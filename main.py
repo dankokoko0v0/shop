@@ -92,7 +92,7 @@ security = HTTPBasic()
 # 解决跨域问题
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://dankokoko.netlify.app/"],  # 上线后改成你的Netlify域名
+    allow_origins=["https://dankokoko.netlify.app"],  # 上线后改成你的Netlify域名
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
