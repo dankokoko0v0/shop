@@ -63,7 +63,7 @@ app = FastAPI(title="我的网店")
 # 解决跨域问题（关键！）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 上线后改成你的Netlify域名，例如："https://my-shop.netlify.app"
+    allow_origins=["https://dankokoko.netlify.app"],  # 上线后改成你的Netlify域名，例如："https://my-shop.netlify.app"
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
